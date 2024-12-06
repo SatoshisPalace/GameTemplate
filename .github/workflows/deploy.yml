@@ -16,4 +16,4 @@ jobs:
             - run: yarn
             - run: CI=false yarn deploy
               env:
-                  KEY: ${{ secrets.PERMAWEB_KEY }}
+                  PERMAWEB_KEY: ${{ secrets.PERMAWEB_KEY }}
