@@ -1,21 +1,24 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import WalletConnection from './WalletConnection';
-import Leaderboard from './Leaderboard';
 
 const HUDContainer = styled.div`
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  padding: 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  z-index: 1000;
+  width: 100%;
+  height: 0;
+  z-index: 100;
 `;
 
-const Score = styled.div`
+const WalletContainer = styled.div`
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 100;
+`;
+
+const ScoreDisplay = styled.div`
   position: fixed;
   bottom: 40px;
   left: 50%;
@@ -29,55 +32,35 @@ const Score = styled.div`
   border-radius: 15px;
   border: 2px solid #6c5ce7;
   box-shadow: 0 0 20px rgba(108, 92, 231, 0.3);
-`;
-
-const HeaderImage = styled.div`
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  top: 40px;
-  img {
-    height: 80px;
-    width: auto;
-  }
-`;
-
-const WalletContainer = styled.div`
-  position: fixed;
-  top: 20px;
-  right: 20px;
+  z-index: 90;
 `;
 
 interface HUDProps {
   score: number;
-  currentAddress?: string;
+  currentAddress: string;
+  onWalletUpdate?: (wallet: any) => void;
 }
 
-const HUD: React.FC<HUDProps> = ({ score, currentAddress }) => {
-  const [isWalletConnected, setIsWalletConnected] = useState(false);
-
-  const handleConnect = () => {
-    setIsWalletConnected(true);
-  };
-
+const HUD: React.FC<HUDProps> = React.memo(({ score, currentAddress, onWalletUpdate }) => {
+  const handleWalletUpdate = useCallback((wallet: any) => {
+    onWalletUpdate?.(wallet);
+  }, [onWalletUpdate]);
+  
   return (
     <HUDContainer>
-      <HeaderImage>
-        <img src="https://i.ibb.co/tXJCGh5/Head-Liner.png" alt="Game Logo" />
-      </HeaderImage>
       <WalletContainer>
         <WalletConnection 
-          isConnected={isWalletConnected} 
-          onConnect={handleConnect}
+          fixed 
+          onWalletUpdate={handleWalletUpdate}
+          isConnected={!!currentAddress}
         />
       </WalletContainer>
-      <Leaderboard 
-        currentAddress={currentAddress}
-        currentScore={score}
-      />
-      <Score>Score: {score}</Score>
+      <ScoreDisplay>Score: {score.toLocaleString()}</ScoreDisplay>
     </HUDContainer>
   );
-};
+}, (prevProps, nextProps) => {
+  return prevProps.score === nextProps.score && 
+         prevProps.currentAddress === nextProps.currentAddress;
+});
 
 export default HUD;

@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import styled from 'styled-components';
 
-const WalletButton = styled.button`
-  position: fixed;
-  top: 20px;
-  right: 20px;
+export const WalletConnectButton = styled.button<{ $fixed?: boolean }>`
+  ${props => props.$fixed ? `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+  ` : ''}
   background: rgba(108, 92, 231, 0.2);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -43,22 +45,40 @@ const WalletStatus = styled.div`
 `;
 
 interface WalletConnectionProps {
-  onConnect: () => void;
-  isConnected: boolean;
+  onConnect?: (connected: boolean) => void;
+  isConnected?: boolean;
+  fixed?: boolean;
+  onWalletUpdate?: (wallet: any) => void;
 }
 
-const WalletConnection: React.FC<WalletConnectionProps> = ({ onConnect, isConnected }) => {
+const WalletConnection: React.FC<WalletConnectionProps> = ({ 
+  onConnect, 
+  isConnected,
+  fixed = true,
+  onWalletUpdate
+}) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [walletAddress, setWalletAddress] = useState<string>('');
+  const [wallet, setWallet] = useState<any>(null);
+  const [connected, setConnected] = useState(isConnected || false);
+  const [error, setError] = useState<string | null>(null);
+
+  const updateWalletState = useCallback((walletObj: any) => {
+    setWallet(walletObj);
+    setConnected(true);
+    onConnect?.(true);
+    onWalletUpdate?.(walletObj);
+  }, [onConnect, onWalletUpdate]);
 
   useEffect(() => {
+    let mounted = true;
+    
     const checkWalletConnection = async () => {
       if (window.arweaveWallet) {
         try {
           const address = await window.arweaveWallet.getActiveAddress();
-          if (address) {
-            setWalletAddress(address);
-            onConnect();
+          if (address && mounted) {
+            const walletObj = { address };
+            updateWalletState(walletObj);
           }
         } catch (error) {
           console.error('Error checking wallet connection:', error);
@@ -67,56 +87,59 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({ onConnect, isConnec
     };
 
     checkWalletConnection();
-  }, [onConnect]);
+    return () => { mounted = false; };
+  }, [updateWalletState]);
 
-  const connectWallet = async () => {
+  const connectWallet = useCallback(async () => {
     if (!window.arweaveWallet) {
-      alert('Please install ArConnect to play!');
-      window.open('https://arconnect.io', '_blank');
+      setError('ArConnect not found. Please install ArConnect extension.');
       return;
     }
 
     setIsLoading(true);
+    setError(null);
+
     try {
-      await window.arweaveWallet.connect([
-        'ACCESS_ADDRESS',
-        'SIGN_TRANSACTION',
-        'DISPATCH'
-      ]);
-      
+      await window.arweaveWallet.connect(['ACCESS_ADDRESS', 'SIGN_TRANSACTION']);
       const address = await window.arweaveWallet.getActiveAddress();
-      setWalletAddress(address);
-      onConnect();
+      
+      if (address) {
+        updateWalletState({ address });
+      }
     } catch (error) {
       console.error('Error connecting wallet:', error);
-      alert('Failed to connect wallet. Please try again.');
+      setError('Failed to connect wallet. Please try again.');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [updateWalletState]);
 
-  const disconnectWallet = async () => {
+  const disconnectWallet = useCallback(async () => {
     if (window.arweaveWallet) {
       try {
         await window.arweaveWallet.disconnect();
-        setWalletAddress('');
+        setWallet(null);
+        setConnected(false);
+        onConnect?.(false);
+        onWalletUpdate?.(null);
       } catch (error) {
         console.error('Error disconnecting wallet:', error);
       }
     }
-  };
+  }, [onConnect, onWalletUpdate]);
 
   return (
     <>
-      <WalletButton 
-        onClick={isConnected ? disconnectWallet : connectWallet}
+      <WalletConnectButton
+        $fixed={fixed}
+        onClick={connected ? disconnectWallet : connectWallet}
         disabled={isLoading}
       >
-        {isLoading ? 'Connecting...' : isConnected ? 'Disconnect Wallet' : 'Connect Wallet'}
-      </WalletButton>
-      {walletAddress && (
+        {isLoading ? 'Connecting...' : connected ? 'Disconnect' : 'Connect Wallet'}
+      </WalletConnectButton>
+      {error && (
         <WalletStatus>
-          Connected: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+          {error}
         </WalletStatus>
       )}
     </>

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@permaweb/aoconnect": "^0.0.62",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
@@ -12,7 +13,10 @@
     "@types/react-dom": "^18.3.1",
     "@types/styled-components": "^5.1.34",
     "arconnect": "^1.0.4",
+    "chart.js": "^4.4.7",
+    "permaweb-deploy": "^1.1.8",
     "react": "^18.3.1",
+    "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.3.1",
     "react-scripts": "5.0.1",
     "styled-components": "^6.1.13",
@@ -21,8 +25,8 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
-    "deploy": "yarn build && node deploy.mjs",
+    "build": "vuepress build src",
+    "deploy": "npm run build && permaweb-deploy --deploy-folder ./src/.vuepress/dist --ant-process $DEPLOY_ANT_PROCESS_ID --undername=template",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
