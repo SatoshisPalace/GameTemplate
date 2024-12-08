@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { LeaderboardEntry, PlayerData, GameStats, TotalGameStats } from '../types/leaderboard';
 import { getTopPlayers, getPlayerHistory, getGameStats, getRecentPlayers, getTotalGameStats } from '../utils/leaderboard';
-import { formatTimeAgo } from '../utils/time';
 import WalletConnection from './WalletConnection';
 
 const LeaderboardContainer = styled.div`
@@ -138,12 +137,30 @@ const PlayerScore = styled.span`
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 `;
 
+const RankCell = styled.td`
+  padding: 8px;
+  text-align: center;
+`;
+
+const ScoreCell = styled.td`
+  padding: 8px;
+  text-align: right;
+`;
+
+const UsernameCell = styled.td`
+  padding: 8px;
+  text-align: left;
+`;
+
+const BadgeSpan = styled.span`
+  margin-left: 8px;
+`;
+
 const StatsContainer = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin: 15px 0;
-  width: 100%;
+  gap: 16px;
+  margin-bottom: 24px;
 `;
 
 const StatBox = styled.div`
@@ -407,7 +424,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
     }
   };
 
-  const fetchData = useCallback(async () => {
+  const fetchData = async () => {
     try {
       console.log('Fetching leaderboard data with address:', currentAddress);
       const [players, recent, stats, totalStatsData] = await Promise.all([
@@ -436,7 +453,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
       console.error("Leaderboard error:", err);
       setError(err instanceof Error ? err.message : 'An error occurred');
     }
-  }, [gameId, currentAddress]);
+  };
 
   const getBadgeType = (index: number): "gold" | "silver" | "bronze" | undefined => {
     if (index < 3) {
@@ -451,7 +468,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
       console.log('Wallet address changed, fetching new data:', currentAddress);
       fetchData();
     }
-  }, [currentAddress, fetchData]);
+  }, [currentAddress]);
 
   // Initial load
   useEffect(() => {
@@ -460,7 +477,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
       setInitialLoading(false);
     };
     loadInitialData();
-  }, [fetchData]);
+  }, []);
 
   // Regular updates for data and time display
   useEffect(() => {
@@ -471,7 +488,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
       clearInterval(fetchInterval);
       clearInterval(updateInterval);
     };
-  }, [fetchData]);
+  }, []);
 
   if (error) {
     return <LeaderboardContainer>Error: {error}</LeaderboardContainer>;

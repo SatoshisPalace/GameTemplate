@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, memo } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import styled from 'styled-components';
 import { submitScore } from '../utils/leaderboard';
 
@@ -131,12 +131,7 @@ const Game: React.FC<GameProps> = memo(({ onScoreUpdate, wallet }) => {
         throw new Error('Invalid score');
       }
 
-      let parsedOtherInfo = {};
-      try {
-        parsedOtherInfo = otherInfo ? JSON.parse(otherInfo) : {};
-      } catch (error) {
-        throw new Error('Invalid JSON in Other Info field');
-      }
+      const { gameId } = JSON.parse(otherInfo);
 
       const result = await submitScore(
         {
@@ -155,7 +150,7 @@ const Game: React.FC<GameProps> = memo(({ onScoreUpdate, wallet }) => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [score, otherInfo, wallet]);
+  }, [score, otherInfo, wallet, onScoreUpdate]);
 
   return (
     <GameContainer>
@@ -194,10 +189,6 @@ const Game: React.FC<GameProps> = memo(({ onScoreUpdate, wallet }) => {
       </ContentArea>
     </GameContainer>
   );
-}, (prevProps, nextProps) => {
-  if (!prevProps.wallet && !nextProps.wallet) return true;
-  if (!prevProps.wallet || !nextProps.wallet) return false;
-  return prevProps.wallet.address === nextProps.wallet.address;
 });
 
 export default Game;

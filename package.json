@@ -1,5 +1,5 @@
 {
-  "name": "pong-game",
+  "name": "template-game",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -23,9 +23,13 @@
     "typescript": "^4.9.5",
     "web-vitals": "^2.1.4"
   },
+  "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "cross-env": "^7.0.3"
+  },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts build",
     "deploy": "npm run build && permaweb-deploy --deploy-folder ./build --ant-process $DEPLOY_ANT_PROCESS_ID --undername=template",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
@@ -34,7 +38,11 @@
     "extends": [
       "react-app",
       "react-app/jest"
-    ]
+    ],
+    "rules": {
+      "@typescript-eslint/no-unused-vars": "warn",
+      "react-hooks/exhaustive-deps": "warn"
+    }
   },
   "browserslist": {
     "production": [
@@ -47,10 +55,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {
-    "@permaweb/arx": "^1.0.0",
-    "arweave": "^1.15.5",
-    "warp-contracts": "^1.4.45"
   }
 }

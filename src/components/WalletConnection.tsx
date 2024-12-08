@@ -58,15 +58,13 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({
   onWalletUpdate
 }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [wallet, setWallet] = useState<any>(null);
   const [connected, setConnected] = useState(isConnected || false);
   const [error, setError] = useState<string | null>(null);
 
-  const updateWalletState = useCallback((walletObj: any) => {
-    setWallet(walletObj);
+  const updateWalletState = useCallback((address: string) => {
     setConnected(true);
     onConnect?.(true);
-    onWalletUpdate?.(walletObj);
+    onWalletUpdate?.({ address });
   }, [onConnect, onWalletUpdate]);
 
   useEffect(() => {
@@ -77,8 +75,7 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({
         try {
           const address = await window.arweaveWallet.getActiveAddress();
           if (address && mounted) {
-            const walletObj = { address };
-            updateWalletState(walletObj);
+            updateWalletState(address);
           }
         } catch (error) {
           console.error('Error checking wallet connection:', error);
@@ -104,7 +101,7 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({
       const address = await window.arweaveWallet.getActiveAddress();
       
       if (address) {
-        updateWalletState({ address });
+        updateWalletState(address);
       }
     } catch (error) {
       console.error('Error connecting wallet:', error);
@@ -118,7 +115,6 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({
     if (window.arweaveWallet) {
       try {
         await window.arweaveWallet.disconnect();
-        setWallet(null);
         setConnected(false);
         onConnect?.(false);
         onWalletUpdate?.(null);
