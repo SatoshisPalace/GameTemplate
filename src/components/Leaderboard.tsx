@@ -157,43 +157,31 @@ const BadgeSpan = styled.span`
 `;
 
 const StatsContainer = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  margin: 1vh 0;
+  gap: 1vh;
 `;
 
 const StatBox = styled.div`
-  background: linear-gradient(180deg, rgba(30, 30, 30, 0.9) 0%, rgba(20, 20, 20, 0.9) 100%);
-  border-radius: 8px;
-  padding: 12px;
+  flex: 1;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  padding: 0.75vh;
   text-align: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-
-  &:last-child {
-    grid-column: span 3;
-  }
+  border: 1px solid rgba(255, 255, 255, 0.05);
 
   .value {
-    font-size: 1.2rem;
+    font-size: 0.9em;
     font-weight: bold;
-    color: #ffd700;
-    margin-bottom: 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    color: #fff;
+    margin-bottom: 0.375vh;
   }
 
   .label {
-    font-size: 0.9rem;
-    color: #888;
+    font-size: 0.675em;
+    color: rgba(255, 255, 255, 0.7);
     text-transform: uppercase;
-  }
-
-  /* Special styling for total score box */
-  &:last-child .value {
-    font-size: 1.4rem;
-    padding: 8px 0;
   }
 `;
 
@@ -276,13 +264,15 @@ const RecentPlayer = styled.div<{ $isNew?: boolean }>`
   }
 `;
 
-const Rank = styled.div`
+const Rank = styled.div<{ $color?: string }>`
   font-size: 1.1em;
   font-weight: bold;
-  color: ${props => props.color || '#fff'};
+  color: ${props => props.$color || '#fff'};
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   margin-right: 1vh;
   min-width: 2em;
+  display: flex;
+  align-items: center;
 `;
 
 const Score = styled.div`
@@ -301,12 +291,10 @@ const Username = styled.div`
 `;
 
 const Badge = styled.span<{ type: 'gold' | 'silver' | 'bronze' }>`
-  color: ${props => ({
-    gold: '#FFD700',
-    silver: '#C0C0C0',
-    bronze: '#CD7F32'
-  }[props.type])};
-  margin-right: 8px;
+  color: ${props => getBadgeColor(props.type)};
+  margin-right: 4px;
+  font-size: 1.2em;
+  line-height: 1;
 `;
 
 const PlayerNameAndWallet = styled.div`
@@ -379,6 +367,25 @@ const StatRow = styled.div`
   }
 `;
 
+const WalletAddress = styled.span`
+  color: #a8a8b3;
+  font-size: 0.9em;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  background: rgba(108, 92, 231, 0.1);
+
+  &:hover {
+    background: rgba(108, 92, 231, 0.2);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
 interface LeaderboardProps {
   gameId: string;
   currentAddress?: string;
@@ -386,6 +393,15 @@ interface LeaderboardProps {
   isWalletConnected: boolean;
   onConnect: (connected: boolean) => void;
 }
+
+const getBadgeColor = (type: 'gold' | 'silver' | 'bronze'): string => {
+  const colors = {
+    gold: '#FFD700',
+    silver: '#C0C0C0',
+    bronze: '#CD7F32'
+  };
+  return colors[type];
+};
 
 const Leaderboard: React.FC<LeaderboardProps> = ({ 
   gameId, 
@@ -408,7 +424,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
   const [lastUpdate, setLastUpdate] = useState<number>(Date.now());
 
   const shortenWalletAddress = (address: string) => {
-    return `${address.slice(0, 3)}...${address.slice(-3)}`;
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
   const formatScore = (score: number) => {
@@ -453,13 +469,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
       console.error("Leaderboard error:", err);
       setError(err instanceof Error ? err.message : 'An error occurred');
     }
-  };
-
-  const getBadgeType = (index: number): "gold" | "silver" | "bronze" | undefined => {
-    if (index < 3) {
-      return ['gold', 'silver', 'bronze'][index] as "gold" | "silver" | "bronze";
-    }
-    return undefined;
   };
 
   // Fetch data when wallet connects or changes
@@ -624,13 +633,22 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
       <Section>
         <SectionTitle>Top Players</SectionTitle>
         <ScrollableList>
-          {topPlayers.map((player, index) => (
-            <PlayerEntry key={index} $highlight={player.walletAddress === currentAddress}>
+          {topPlayers.map((entry, index) => (
+            <PlayerEntry key={`${entry.walletAddress}-${entry.timestamp}`} $highlight={entry.walletAddress === currentAddress}>
               <PlayerInfo>
-                <PlayerName>{player.username || 'Anonymous'}</PlayerName>
-                <PlayerAddress onClick={() => copyToClipboard(player.walletAddress)}>{shortenWalletAddress(player.walletAddress)}</PlayerAddress>
+                <Rank $color={index < 3 ? getBadgeColor(['gold', 'silver', 'bronze'][index] as 'gold' | 'silver' | 'bronze') : undefined}>
+                  {index < 3 && <Badge type={['gold', 'silver', 'bronze'][index] as 'gold' | 'silver' | 'bronze'}>●</Badge>}
+                  #{index + 1}
+                </Rank>
+                <Username>{entry.username}</Username>
+                <WalletAddress 
+                  onClick={() => copyToClipboard(entry.walletAddress)}
+                  title="Click to copy address"
+                >
+                  {shortenWalletAddress(entry.walletAddress)}
+                </WalletAddress>
               </PlayerInfo>
-              <PlayerScore>{formatScore(player.score)}</PlayerScore>
+              <Score>{formatScore(entry.score)}</Score>
             </PlayerEntry>
           ))}
         </ScrollableList>

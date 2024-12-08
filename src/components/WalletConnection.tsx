@@ -44,6 +44,30 @@ const WalletStatus = styled.div`
   z-index: 1000;
 `;
 
+const WalletAddress = styled.div`
+  position: fixed;
+  top: 70px;
+  right: 20px;
+  background: rgba(108, 92, 231, 0.1);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 1000;
+
+  &:hover {
+    background: rgba(108, 92, 231, 0.2);
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
 interface WalletConnectionProps {
   onConnect?: (connected: boolean) => void;
   isConnected?: boolean;
@@ -60,11 +84,26 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [connected, setConnected] = useState(isConnected || false);
   const [error, setError] = useState<string | null>(null);
+  const [address, setAddress] = useState<string | null>(null);
 
-  const updateWalletState = useCallback((address: string) => {
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      console.log('Address copied to clipboard');
+    } catch (err) {
+      console.error('Failed to copy address:', err);
+    }
+  };
+
+  const shortenAddress = (addr: string) => {
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  };
+
+  const updateWalletState = useCallback((walletAddress: string) => {
     setConnected(true);
+    setAddress(walletAddress);
     onConnect?.(true);
-    onWalletUpdate?.({ address });
+    onWalletUpdate?.({ address: walletAddress });
   }, [onConnect, onWalletUpdate]);
 
   useEffect(() => {
@@ -133,6 +172,11 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({
       >
         {isLoading ? 'Connecting...' : connected ? 'Disconnect' : 'Connect Wallet'}
       </WalletConnectButton>
+      {connected && address && (
+        <WalletAddress onClick={() => copyToClipboard(address)} title="Click to copy">
+          {shortenAddress(address)}
+        </WalletAddress>
+      )}
       {error && (
         <WalletStatus>
           {error}

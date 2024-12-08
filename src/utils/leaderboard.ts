@@ -87,6 +87,8 @@ export const getPlayerHistory = async (
         `playerHistory-${walletAddress}-${gameId}-${page}-${pageSize}`,
         async () => {
             try {
+                console.log('Getting player history for wallet:', walletAddress);
+                console.log('Game ID:', gameId);
                 const result = await dryrun({
                     process: PROCESS_ID,
                     tags: [
@@ -101,15 +103,20 @@ export const getPlayerHistory = async (
                 });
 
                 if (!result.Messages?.[0]?.Data) {
+                    console.warn('No messages received from leaderboard query');
                     throw new Error("Invalid response from leaderboard");
                 }
 
                 const response = JSON.parse(result.Messages[0].Data);
+                console.log('Raw leaderboard response:', response);
+                
                 if (!response.success) {
+                    console.error('Leaderboard query failed:', response.error);
                     throw new Error(response.error || "Failed to get player history");
                 }
 
                 const scores = Object.values(response.data || {});
+                console.log('Retrieved scores:', scores);
                 if (!Array.isArray(scores)) {
                     return {
                         walletAddress,
