@@ -25,8 +25,8 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "vuepress build src",
-    "deploy": "npm run build && permaweb-deploy --deploy-folder ./src/.vuepress/dist --ant-process $DEPLOY_ANT_PROCESS_ID --undername=template",
+    "build": "react-scripts build",
+    "deploy": "npm run build && permaweb-deploy --deploy-folder ./build --ant-process $DEPLOY_ANT_PROCESS_ID --undername=template",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
